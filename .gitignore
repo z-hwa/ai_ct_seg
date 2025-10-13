@@ -1,0 +1,6 @@
+AICUP_training
+CardiacSegV2/dataset/*
+CardiacSegV2/exps/exps/*
+myo_pred/*
+SegFormer3D/datasets
+SegFormer3D/experiments
