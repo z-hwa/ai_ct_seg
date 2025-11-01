@@ -1,0 +1,40 @@
+{
+    "train": [
+        {
+            "image": "patient0001.nii.gz",
+            "label": "patient0001_gt.nii.gz"
+        },
+        {
+            "image": "patient0002.nii.gz",
+            "label": "patient0002_gt.nii.gz"
+        },
+        {
+            "image": "patient0003.nii.gz",
+            "label": "patient0003_gt.nii.gz"
+        },
+        {
+            "image": "patient0004.nii.gz",
+            "label": "patient0004_gt.nii.gz"
+        },
+        {
+            "image": "patient0005.nii.gz",
+            "label": "patient0005_gt.nii.gz"
+        }
+    ],
+    "val": [
+        {
+            "image": "patient0041.nii.gz",
+            "label": "patient0041_gt.nii.gz"
+        },
+        {
+            "image": "patient0042.nii.gz",
+            "label": "patient0042_gt.nii.gz"
+        },
+        {
+            "image": "patient0043.nii.gz",
+            "label": "patient0043_gt.nii.gz"
+        }
+    ],
+    "test": [
+    ]
+}
