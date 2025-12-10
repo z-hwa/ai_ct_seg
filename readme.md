@@ -25,7 +25,7 @@ Please download the contest dataset, and unzip it under folder "dataset".
 (If folder not exist, created under "CardiacSegV2".)
 
 ### training phase
-For training, you need to put data of patient001~patient0050 under "dataset/train". And patient0046~patient0050 under "dataset/val".
+For training, you need to put data of patient001~patient0050 under "dataset/chgh/train". And patient0046~patient0050 under "dataset/chgh/val".
 * If the folder does not exist, created by yourself.
 * Data including image and label file, for example patient0001.nii.gz and patient0001_gt.nii.gz
 
@@ -53,7 +53,7 @@ CardiacSegV2
 For submit contest prediction, you need to prepare dataset for test.
 * If folder not exist, created by youself.
 
-Put data of patient0051~patient0100 under "dataset/pred".
+Put data of patient0051~patient0100 under "dataset/chgh/pred".
 
 the final path will look like
 ```
