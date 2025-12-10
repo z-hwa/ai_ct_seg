@@ -73,7 +73,7 @@ class MyDataLoader:
                 files=self.val_files,
                 transform=self.val_transform,
                 shuffle=False,
-                batch_size=self.args.batch_size,
+                batch_size=self.args.batch_val_size,
                 args=self.args
             )
             return [train_loader, val_loader]

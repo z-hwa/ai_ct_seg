@@ -45,6 +45,7 @@ def get_parser(argv):
     # data loader
     parser.add_argument("--data_loader", default='cache', type=str, help="cache dataset, generic dataset")
     parser.add_argument("--batch_size", default=1, type=int, help="number of batch size")
+    parser.add_argument("--batch_val_size", default=1, type=int, help="number of val batch size")
     parser.add_argument("--pin_memory", action="store_true", help="pin memory")
     parser.add_argument("--workers", default=2, type=int, help="number of workers")
 
@@ -107,7 +108,9 @@ def get_parser(argv):
     parser.add_argument("--infer_overlap", default=0.25, type=float, help="sliding window inference overlap")
     parser.add_argument("--infer_post_process", action="store_true", help="infer post process")
 
-    
+    # unetr pp
+    parser.add_argument("--do_ds", default=None, type=str, help="whether to open do ds for unetrpp on3, true or false")
+
     # get args
     args = parser.parse_args(argv)
     

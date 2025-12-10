@@ -13,7 +13,7 @@ from monai.transforms import (
     SpatialPadd
 )
 
-from monai.transforms import RandAffineD, Rand3DElasticd, RandAdjustContrastd, RandGaussianNoised, RandGaussianSmoothd, ComputeSDMd
+from monai.transforms import RandAffineD, Rand3DElasticd, RandAdjustContrastd, RandGaussianNoised, RandGaussianSmoothd#, ComputeSDMd
 
 
 def get_train_transform(args):
@@ -77,11 +77,11 @@ def get_train_transform(args):
             # 必须在 ToTensord 之前，因为 SDM 计算基于 NumPy
             # 必须在所有随机空间变换之后，以确保 SDM 对应增强后的标签
             # 如果您的标签是单通道类别 (例如 0, 1, 2)，您需要指定 num_classes
-            ComputeSDMd(
-                label_key="label", 
-                dist_key="dist_maps", 
-                num_classes=args.out_channels # 仅当标签是单通道类别时才需要
-            ),
+            # ComputeSDMd(
+            #     label_key="label", 
+            #     dist_key="dist_maps", 
+            #     num_classes=args.out_channels # 仅当标签是单通道类别时才需要
+            # ),
             
             RandShiftIntensityd(
                 keys=["image"],
@@ -94,7 +94,7 @@ def get_train_transform(args):
             # RandGaussianNoised(keys=["image"], prob=0.2, mean=0.0, std=0.01),
             # RandGaussianSmoothd(keys=["image"], prob=0.2, sigma_x=(0.5,1.0), sigma_y=(0.5,1.0), sigma_z=(0.5,1.0)),
             
-            ToTensord(keys=["image", "label", "dist_maps"])
+            ToTensord(keys=["image", "label"])
         ]
     )
 

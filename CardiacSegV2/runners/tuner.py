@@ -24,6 +24,9 @@ def val_epoch(loader, model, model_inferer, acc_func, post_label, post_pred, glo
             val_inputs, val_labels = (batch["image"].cuda(), batch["label"].cuda())
             val_outputs = model_inferer(val_inputs)
 
+            if args.deep_sup:
+                val_outputs = val_outputs[0]
+
             val_labels_list = decollate_batch(val_labels)
             val_labels_convert = [
                 post_label(val_label_tensor) for val_label_tensor in val_labels_list
@@ -216,7 +219,8 @@ def run_training(
                 writer,
                 global_step,
                 epoch,
-                args
+                args,
+                scaler=scaler
             )
 
         if (

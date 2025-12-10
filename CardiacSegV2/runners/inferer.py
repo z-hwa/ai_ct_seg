@@ -30,6 +30,11 @@ def infer(model, data, model_inferer, device):
     model.eval()
     with torch.no_grad():
         output = model_inferer(data['image'].to(device))
+
+        # deal with deep sup
+        if isinstance(output, tuple):
+            output = output[0]
+
         output = torch.argmax(output, dim=1)
     return output
 

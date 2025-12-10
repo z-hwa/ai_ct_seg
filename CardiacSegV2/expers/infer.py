@@ -1,6 +1,6 @@
 import sys
 # set package path
-sys.path.append("/root/Document/ai_cup_ctseg/CardiacSegV2")
+sys.path.append("/root/Document/ai_ct_seg/CardiacSegV2")
 
 import os
 from functools import partial

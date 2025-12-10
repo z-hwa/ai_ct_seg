@@ -1,6 +1,6 @@
 from monai.networks.nets import SwinUNETR, UNETR, UNet, AttentionUnet, VNet, DynUNet
 from networks.cotr.network_architecture.ResTranUnet import ResTranUnet as CoTr
-from networks.unetr_pp.network_architecture.synapse.unetr_pp_synapse import UNETR_PP
+from networks.unetr_pp.network_architecture.synapse.unetr_pp_synapse import UNETR_PP, UNETR_PP_linear
 from networks.uxnet.networks.UXNet_3D.network_backbone import UXNET
 from networks.unest.scripts.networks.unest import UNesT
 
@@ -14,7 +14,7 @@ from networks.testnet.baseline_rescbam import BASELINE_RESCBAM
 from networks.testnet.baseline_inceptionnext import BASELINE_INCEPTIONNEXT
 from networks.testnet.testnet import TESTNET
 
-from networks.architectures.segformer3d_1 import SegFormer3D
+from networks.architectures.segformer3d import SegFormer3D
 # from networks.unetr_pp.network_architecture.acdc.unetr_pp_acdc import UNETR_PP
 
 
@@ -117,7 +117,94 @@ def network(model_name, args):
           dims=[24, 48, 96, 192],
           do_ds=False,
         ).to(args.device)
-
+    
+    elif model_name == 'unetr_pp_linear':
+        
+        print("\033[031m Network: \033[0m Using Unetr_pp linear ")
+        return UNETR_PP_linear(
+          in_channels=args.in_channels,
+          out_channels=args.out_channels,
+          img_size=[args.roi_x, args.roi_y, args.roi_z],
+          feature_size=12,
+          num_heads=4,
+          depths=[3, 3, 3, 3],
+          dims=[24, 48, 96, 192],
+          do_ds=False,
+        ).to(args.device)
+    
+        
+    elif model_name == 'unetr_pp_linear_on3':
+        from networks.unetr_pp.network_architecture.synapse.unetr_pp_synapse import UNETR_PP_linear_on3
+        print("\033[031m Network: \033[0m Using Unetr_pp linear on decoder 3")
+        print(f"\033[031m do ds: \033[0m {args.do_ds}")
+        return UNETR_PP_linear_on3(
+          in_channels=args.in_channels,
+          out_channels=args.out_channels,
+          img_size=[args.roi_x, args.roi_y, args.roi_z],
+          feature_size=12,
+          num_heads=4,
+          depths=[3, 3, 3, 3],
+          dims=[24, 48, 96, 192],
+          do_ds=True if args.do_ds is not None else False,
+        ).to(args.device)
+    
+        
+    elif model_name == 'unetr_pp_linear_0on3':
+        from networks.unetr_pp.network_architecture.synapse.unetr_pp_synapse import UNETR_PP_linear_0on3
+        print("\033[031m Network: \033[0m Using Unetr_pp linear on encoder 0 and on decoder 3")
+        return UNETR_PP_linear_0on3(
+          in_channels=args.in_channels,
+          out_channels=args.out_channels,
+          img_size=[args.roi_x, args.roi_y, args.roi_z],
+          feature_size=12,
+          num_heads=4,
+          depths=[3, 3, 3, 3],
+          dims=[24, 48, 96, 192],
+          do_ds=False,
+        ).to(args.device)
+        
+    elif model_name == 'unetr_pp_linear_on34':
+        from networks.unetr_pp.network_architecture.synapse.unetr_pp_synapse import UNETR_PP_linear_on34
+        print("\033[031m Network: \033[0m Using Unetr_pp linear on decoder 3 and 4")
+        return UNETR_PP_linear_on34(
+          in_channels=args.in_channels,
+          out_channels=args.out_channels,
+          img_size=[args.roi_x, args.roi_y, args.roi_z],
+          feature_size=12,
+          num_heads=4,
+          depths=[3, 3, 3, 3],
+          dims=[24, 48, 96, 192],
+          do_ds=False,
+        ).to(args.device)
+        
+    elif model_name == 'unetr_pp_linear_on345':
+        from networks.unetr_pp.network_architecture.synapse.unetr_pp_synapse import UNETR_PP_linear_on345
+        print("\033[031m Network: \033[0m Using Unetr_pp linear on decoder 3, 4 and 5")
+        return UNETR_PP_linear_on345(
+          in_channels=args.in_channels,
+          out_channels=args.out_channels,
+          img_size=[args.roi_x, args.roi_y, args.roi_z],
+          feature_size=12,
+          num_heads=4,
+          depths=[3, 3, 3, 3],
+          dims=[24, 48, 96, 192],
+          do_ds=False,
+        ).to(args.device)
+        
+    elif model_name == 'unetr_pp_linear_on2345':
+        from networks.unetr_pp.network_architecture.synapse.unetr_pp_synapse import UNETR_PP_linear_on2345
+        print("\033[031m Network: \033[0m Using Unetr_pp linear on decoder 2, 3, 4 and 5")
+        return UNETR_PP_linear_on2345(
+          in_channels=args.in_channels,
+          out_channels=args.out_channels,
+          img_size=[args.roi_x, args.roi_y, args.roi_z],
+          feature_size=12,
+          num_heads=4,
+          depths=[3, 3, 3, 3],
+          dims=[24, 48, 96, 192],
+          do_ds=False,
+        ).to(args.device)
+    
     elif model_name == 'uxnet':
         return UXNET(
             in_chans=args.in_channels,

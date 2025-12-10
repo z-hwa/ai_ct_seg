@@ -1,6 +1,6 @@
 import sys
 # set package path
-sys.path.append("/root/Document/ai_cup_ctseg/CardiacSegV2")
+sys.path.append("/root/Document/ai_ct_seg/CardiacSegV2")
 
 import os
 from functools import partial
@@ -17,10 +17,10 @@ from ray.tune import CLIReporter
 # 添加这行代码，在其他 Ray 相关的导入之前
 # 在这里手动初始化 Ray，并指定 GPU 数量
 # 假设您只有一块 GPU，如果有多块，请修改 num_gpus
-ray.init(num_gpus=1, runtime_env={"working_dir": "/root/Document/ai_cup_ctseg/CardiacSegV2"})
+ray.init(num_gpus=1, runtime_env={"working_dir": "/root/Document/ai_ct_seg/CardiacSegV2"})
 
 from monai.inferers import sliding_window_inference
-from monai.losses import DiceCELoss, DiceFocalLoss, DiceLoss, GeneralizedDiceFocalLoss, BoundaryGeneralizedDiceFocalLoss
+from monai.losses import DiceCELoss, DiceFocalLoss, DiceLoss, GeneralizedDiceFocalLoss#, BoundaryGeneralizedDiceFocalLoss
 from monai.metrics import DiceMetric
 from monai.transforms import (
     AsDiscrete,
@@ -112,16 +112,16 @@ def main_worker(args):
             lambda_gdl=args.lambda_gdl,
             lambda_focal=args.lambda_focal
         )
-    elif args.loss == 'BoundaryGeneralizedDiceFocalLoss':
-        print('\033[31m loss: \033[0m Boundary Generalized Dice Focal Loss')
-        dice_loss = BoundaryGeneralizedDiceFocalLoss(
-            to_onehot_y=True, 
-            softmax=True,
-            gamma=2.0,
-            lambda_gdl=args.lambda_gdl,
-            lambda_focal=args.lambda_focal,
-            lambda_boundary=args.lambda_boundary
-        )
+    # elif args.loss == 'BoundaryGeneralizedDiceFocalLoss':
+    #     print('\033[31m loss: \033[0m Boundary Generalized Dice Focal Loss')
+    #     dice_loss = BoundaryGeneralizedDiceFocalLoss(
+    #         to_onehot_y=True, 
+    #         softmax=True,
+    #         gamma=2.0,
+    #         lambda_gdl=args.lambda_gdl,
+    #         lambda_focal=args.lambda_focal,
+    #         lambda_boundary=args.lambda_boundary
+    #     )
 
     else:
         print('loss: dice ce loss')

@@ -164,3 +164,154 @@ class UnetrUpBlock(nn.Module):
         out = self.decoder_block[0](out)
 
         return out
+
+import torch
+
+# 為了避免冗餘代碼，這裡假設我們在 UnetrUpBlock 類別外部定義一個更簡單的類
+class UnetrUpBlockLinear(nn.Module):
+    def __init__(
+        self,
+        spatial_dims: int,
+        in_channels: int,
+        out_channels: int,
+        upsample_kernel_size: Union[Sequence[int], int],
+        norm_name: Union[Tuple, str],
+        # 其他不相關參數被移除以保持簡潔
+    ) -> None:
+        super().__init__()
+        upsample_stride = upsample_kernel_size
+        
+        # 1. 轉置卷積實現 4x 上採樣和通道降維
+        # in_channels=feature_size*2, out_channels=feature_size
+        self.transp_conv = get_conv_layer(
+            spatial_dims,
+            in_channels,
+            out_channels,
+            kernel_size=upsample_kernel_size,
+            stride=upsample_stride,
+            conv_only=True,
+            is_transposed=True,
+        )
+        
+        # 2. 輕量級線性投影 (用 1x1x1 卷積模擬)
+        # 輸入通道: out_channels (來自上採樣) + out_channels (來自 skip) = out_channels * 2
+        # 輸出通道: out_channels
+        self.linear_projection = nn.Sequential(
+            get_conv_layer(spatial_dims, out_channels * 2, out_channels, kernel_size=1, stride=1, conv_only=True),
+            get_norm_layer(name=norm_name, channels=out_channels, spatial_dims=3),
+            nn.LeakyReLU(negative_slope=0.01, inplace=True),
+        )
+
+    def forward(self, inp, skip):
+        
+        # 1. 上採樣
+        out = self.transp_conv(inp)
+        
+        # 處理跳躍連接的尺寸差異
+        # 由於 UnetrUpBlock 的 forward 函數設計是 out = out + skip，
+        # 這裡我們手動處理可能發生的尺寸不匹配問題（雖然在 UNETR_PP 中不會發生）
+        if out.shape != skip.shape:
+             # 如果尺寸略有不同，需要裁剪或填充，這裡使用 MONAI 的功能確保尺寸一致
+             # 在 UNETR_PP 中，out 和 skip (convBlock) 理論上尺寸相同，都是 img_size
+             # 但如果 trans_conv 輸出尺寸略有偏差，這裡需要手動調整
+             # 為了簡潔和假設 UNETR_PP 結構正確，我們這裡假設 out.shape == skip.shape
+
+             # 如果要更健壯，可以使用 MONAI 的 ResampleLayer 或 Crop/Pad
+             pass
+        
+        # 2. 拼接 (SegFormer 常用拼接再投影)
+        merged = torch.cat((out, skip), dim=1) # 通道數為 out_channels * 2
+        
+        # 3. 輕量級線性投影
+        final_out = self.linear_projection(merged)
+
+        return final_out
+    
+
+class UnetrPPEncoder_linear_on0(nn.Module):
+    def __init__(self,
+                    img_size=(128, 128, 128),            # 新增：輸入影像大小（可改成 96 或 128）
+                    patch_size=(4, 4, 4),               # 新增：patch size（應與 UNETR_PP 裡相同）
+                    input_size=None,                    # 如果提供則使用，否則自動計算
+                    dims=[24, 48, 96, 192],
+                    proj_size =[48,48,48,24], depths=[3, 3, 3, 3],  num_heads=4, spatial_dims=3, in_channels=1, dropout=0.0, transformer_dropout_rate=0.15 ,**kwargs):
+        super().__init__()
+
+        # ---- 自動計算 input_size（若使用者沒給） ----
+        if input_size is None:
+            # stem output spatial resolution = img_size // patch_size
+            s0 = (img_size[0] // patch_size[0],
+                  img_size[1] // patch_size[1],
+                  img_size[2] // patch_size[2])
+            # each subsequent stage halves spatial dims
+            s1 = (s0[0] // 2, s0[1] // 2, s0[2] // 2)
+            s2 = (s1[0] // 2, s1[1] // 2, s1[2] // 2)
+            s3 = (s2[0] // 2, s2[1] // 2, s2[2] // 2)
+            input_size = [
+                s0[0] * s0[1] * s0[2],
+                s1[0] * s1[1] * s1[2],
+                s2[0] * s2[1] * s2[2],
+                s3[0] * s3[1] * s3[2],
+            ]
+        # ---- end auto input_size ----
+
+        self.downsample_layers = nn.ModuleList()  # stem and 3 intermediate downsampling conv layers
+        stem_layer = nn.Sequential(
+            get_conv_layer(spatial_dims, in_channels, dims[0], kernel_size=(4, 4, 4), stride=(4, 4, 4),
+                           dropout=dropout, conv_only=True, ),
+            get_norm_layer(name=("group", {"num_groups": in_channels}), channels=dims[0]),
+        )
+        self.downsample_layers.append(stem_layer)
+        for i in range(3):
+            downsample_layer = nn.Sequential(
+                get_conv_layer(spatial_dims, dims[i], dims[i + 1], kernel_size=(2, 2, 2), stride=(2, 2, 2),
+                               dropout=dropout, conv_only=True, ),
+                get_norm_layer(name=("group", {"num_groups": dims[i]}), channels=dims[i + 1]),
+            )
+            self.downsample_layers.append(downsample_layer)
+
+        self.stages = nn.ModuleList()  # 4 feature resolution stages, each consisting of multiple Transformer blocks
+        for i in range(4):
+            if i == 0:
+                # --- 替換 Stage 0: 移除 Transformer Block，使用恆等映射 (Identity) ---
+                # 這樣 x 經過 self.downsample_layers[1](x) 後，會直接通過 self.stages[1]
+                self.stages.append(nn.Identity())
+                print("✅ UNETR++ Encoder Stage 1 (i=1) 已替換為 nn.Identity (移除 Transformer)")
+                continue # 跳過剩餘的 Transformer block 創建
+
+            stage_blocks = []
+            for j in range(depths[i]):
+                stage_blocks.append(TransformerBlock(input_size=input_size[i], hidden_size=dims[i],  proj_size=proj_size[i], num_heads=num_heads,
+                                     dropout_rate=transformer_dropout_rate, pos_embed=True))
+            self.stages.append(nn.Sequential(*stage_blocks))
+        self.hidden_states = []
+        self.apply(self._init_weights)
+
+    def _init_weights(self, m):
+        if isinstance(m, (nn.Conv2d, nn.Linear)):
+            trunc_normal_(m.weight, std=.02)
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, (LayerNorm, nn.LayerNorm)):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+
+    def forward_features(self, x):
+        hidden_states = []
+
+        x = self.downsample_layers[0](x)
+        x = self.stages[0](x)
+
+        hidden_states.append(x)
+
+        for i in range(1, 4):
+            x = self.downsample_layers[i](x)
+            x = self.stages[i](x)
+            if i == 3:  # Reshape the output of the last stage
+                x = einops.rearrange(x, "b c h w d -> b (h w d) c")
+            hidden_states.append(x)
+        return x, hidden_states
+
+    def forward(self, x):
+        x, hidden_states = self.forward_features(x)
+        return x, hidden_states
