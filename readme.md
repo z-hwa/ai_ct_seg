@@ -1,6 +1,6 @@
 # AI CUP 2025: CT Image Segmentation of Cardiac Muscle
 
-本專案為 **AI CUP 2025 秋季賽：電腦斷層心臟肌肉影像分割** 競賽之實作。我們在 **Private Leaderboard 取得 0.806351 分，排名第 12 名**。
+本專案為 **AI CUP 2025 秋季賽：電腦斷層心臟肌肉影像分割** 競賽之實作。我們在 **Private Leaderboard 取得 0.806351 分，總排名第 12 名，學生組排名第 9 名**。榮獲學生組佳作。該比賽共有568個隊伍參與。
 
 ## 專案亮點
 * **解碼器結構優化**：針對 UNETR++ 的解碼器進行改良，設計並整合了**線性上採樣層 (Linear Upsampling Layer)**，提升模型泛化能力並降低過擬合風險。
